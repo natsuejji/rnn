@@ -7,7 +7,7 @@ import random
 class Vimeo90k_dataset(data.Dataset):
 
     def __init__(self, 
-                 root_path ='E:/dataset/vimeo_septuplet/',
+                 root_path ='/aipr/vimeo_septuplet/',
                  scale = 4,
                  dataset_mode = 'train',
                  degrade_mode ='BI'
@@ -18,8 +18,8 @@ class Vimeo90k_dataset(data.Dataset):
         if dataset_mode not in ['train', 'test']:
             raise ValueError(f'只有train或test兩種資料集')
         self.dataset_mode = dataset_mode
-        self.degrade_img_path = root_path + 'sequences/LR/' + degrade_mode + '/x4/' 
-        self.img_path = root_path + 'sequences/HR/'
+        self.degrade_img_path = root_path + 'LR/' + degrade_mode + '/x4/' 
+        self.img_path = root_path + 'HR/'
         self.scale = scale
         self.metadata_path = root_path + 'sep_trainlist.txt' if dataset_mode == 'train' else root_path + 'sep_testlist.txt'
         self.all_clip = []

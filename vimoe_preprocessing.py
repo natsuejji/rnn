@@ -31,7 +31,8 @@ def duf_downsample(x, kernel_size=13, scale=4):
         Returns:
             Tensor: DUF downsampled frames.
     """
-    assert scale in (2, 3, 4), f'Only support scale (2, 3, 4), but got {scale}.'
+    if scale not in (2, 3, 4):
+        raise ValueError(f'Only support scale (2, 3, 4), but got {scale}.')
 
     squeeze_flag = False
     if x.ndim == 4:
@@ -86,7 +87,7 @@ def degradation(clips,
 
 def main():
     
-    root_path='E:/dataset/vimeo_septuplet/'
+    root_path='/aipr/vimeo_septuplet/'
     test_set_txt = 'sep_testlist.txt'
     train_set_txt = 'sep_trainlist.txt'
 
@@ -98,8 +99,8 @@ def main():
     with open(root_path + train_set_txt, 'r') as f:
         train_set = f.readlines()
 
-    degradation(train_set, data_path=root_path+'sequences/')
-    degradation(test_set, data_path=root_path+'sequences/')    
+    degradation(train_set, data_path=root_path)
+    degradation(test_set, data_path=root_path)    
 
     
     
