@@ -1,3 +1,4 @@
+from os import name
 import torch
 import torch.nn as nn
 import torch.functional as F
@@ -187,6 +188,33 @@ class ResidualBlocksWithInputConv(nn.Module):
             Tensor: Output feature with shape (n, out_channels, h, w)
         """
         return self.main(feat)
+        
+class Discriminator(nn.Module):
+    def __init__(self):
+        super(Discriminator, self).__init__()
+
+        self.conv1 = SpectralNorm(nn.Conv2d(channels, 64, 3, stride=1, padding=(1, 1)))
+        self.conv2 = SpectralNorm(nn.Conv2d(64, 64, 4, stride=2, padding=(1, 1)))
+        self.conv3 = SpectralNorm(nn.Conv2d(64, 128, 3, stride=1, padding=(1, 1)))
+        self.conv4 = SpectralNorm(nn.Conv2d(128, 128, 4, stride=2, padding=(1, 1)))
+        self.conv5 = SpectralNorm(nn.Conv2d(128, 256, 3, stride=1, padding=(1, 1)))
+        self.conv6 = SpectralNorm(nn.Conv2d(256, 256, 4, stride=2, padding=(1, 1)))
+        self.conv7 = SpectralNorm(nn.Conv2d(256, 256, 3, stride=1, padding=(1, 1)))
+        self.conv8 = SpectralNorm(nn.Conv2d(256, 512, 4, stride=2, padding=(1, 1)))
+        self.fc = SpectralNorm(nn.Linear(w_g * w_g * 512, 1))
+
+    def forward(self, x):
+        m = x
+        m = nn.LeakyReLU(leak)(self.conv1(m))
+        m = nn.LeakyReLU(leak)(nn.InstanceNorm2d(64)(self.conv2(m)))
+        m = nn.LeakyReLU(leak)(nn.InstanceNorm2d(128)(self.conv3(m)))
+        m = nn.LeakyReLU(leak)(nn.InstanceNorm2d(128)(self.conv4(m)))
+        m = nn.LeakyReLU(leak)(nn.InstanceNorm2d(256)(self.conv5(m)))
+        m = nn.LeakyReLU(leak)(nn.InstanceNorm2d(256)(self.conv6(m)))
+        m = nn.LeakyReLU(leak)(nn.InstanceNorm2d(256)(self.conv7(m)))
+        m = nn.LeakyReLU(leak)(self.conv8(m))
+
+        return self.fc(m.view(-1, w_g * w_g * 512))
 
 class ResidualBlockNoBN(nn.Module):
     """Residual block without BN.

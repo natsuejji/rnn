@@ -127,3 +127,5 @@ class PixelShufflePack(nn.Module):
         x = F.pixel_shuffle(x, self.scale_factor)
         return x
 
+def save2png(tensor_seq: torch.FloatTensor):
+    print(tensor_seq.size())
