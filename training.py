@@ -12,12 +12,13 @@ from prefetcher import CUDAPrefetcher
 import vimeo_loader
 import time 
 import numpy as np
+import model.BasicVSR as vsr
 import os
 import cv2
 
 def train(batch_size=2, num_iter=3e5, test_step=5000, test_iter=100):
     torch.backends.cudnn.benchmark = True
-    model = SwinIR()
+    model = vsr()
     model.to(device=torch.device("cuda:0"))
     model.train()
     
@@ -27,15 +28,28 @@ def train(batch_size=2, num_iter=3e5, test_step=5000, test_iter=100):
     test_prefect = CUDAPrefetcher(test_genetator)
     criterion = CharbonnierLoss()
     lr = 2e-4
+    # optimizer = optim.Adam([
+    #     {'params': model.spynet.parameters(), 'lr': lr*0.125},
+    #     {'params': model.conv_after_body.parameters()},
+    #     {'params': model.conv_before_upsample.parameters()},
+    #     {'params': model.upsample.parameters()},
+    #     {'params': model.conv_last.parameters()},
+    #     {'params': model.layers.parameters()},
+    #     {'params': model.conv_first.parameters()},
+    #         ], lr=lr)
+
     optimizer = optim.Adam([
-        {'params': model.spynet.parameters(), 'lr': lr*0.125},
-        {'params': model.conv_after_body.parameters()},
-        {'params': model.conv_before_upsample.parameters()},
-        {'params': model.upsample.parameters()},
+        {'params': model.flow_estimator.parameters(), 'lr': lr*0.125},
+        {'params': model.forwrad_prop.parameters()},
+        {'params': model.backwrad_prop.parameters()},
+        {'params': model.fusion.parameters()},
+        {'params': model.upsample1.parameters()},
+        {'params': model.upsample2.parameters()},
+        {'params': model.conv_hr.parameters()},
         {'params': model.conv_last.parameters()},
-        {'params': model.layers.parameters()},
-        {'params': model.conv_first.parameters()},
+        {'params': model.img_upsample.parameters()},
             ], lr=lr)
+
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer,eta_min=1e-7, T_max=lr)
     start = torch.cuda.Event(enable_timing=True)
     end = torch.cuda.Event(enable_timing=True)
@@ -81,7 +95,8 @@ def train(batch_size=2, num_iter=3e5, test_step=5000, test_iter=100):
                     lr = sample['lr']
 
                     pred_hr = model(lr).detach()
-                    mean_psnr = PSNR()(hr*255.0, pred_hr*255.0).item()
+                    mean_psnr += PSNR()(hr*255.0, pred_hr*255.0).item()
+                mean_psnr /= test_iter
                 end.record()
                 print(f'{iter_idx+1}/{num_iter}  psnr : {mean_psnr:.2f}, loss : {average_loss:.2f} \
                         Consume time:{start.elapsed_time(end)/1000.0:.2f} second.')

@@ -737,6 +737,9 @@ class SwinIR(nn.Module):
 
         self.apply(self._init_weights)
 
+        self.last_softmax = nn.Softmax(dim=-1)
+
+
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
             trunc_normal_(m.weight, std=.02)
@@ -823,7 +826,7 @@ class SwinIR(nn.Module):
         x = self.conv_after_body(self.forward_features(x)) + x
         x = self.conv_before_upsample(x)
         x = self.conv_last(self.upsample(x))
-
+        # x = self.last_softmax(x)
         x = x / self.img_range + self.mean
 
         return x[:, :, :H*self.upscale, :W*self.upscale]
